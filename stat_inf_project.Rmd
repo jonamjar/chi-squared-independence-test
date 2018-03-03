@@ -1,0 +1,266 @@
+---
+title: "Statistical inference with the GSS data"
+output:
+  html_document:
+    highlight: pygments
+    theme: cerulean
+  pdf_document: default
+---
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+
+#knitr::opts_chunk$set(fig.width=12, fig.height=12) 
+
+library(ggplot2)
+library(dplyr)
+library(statsr)
+library(vcd)
+
+```
+
+### Load data
+
+```{r load-data}
+
+load("gss.Rdata")
+
+```
+
+
+* * *
+
+## Part 1: Data
+
+
+<strong>How is sample collected?</strong>
+
+GSS collects data to understand trends in attitudes, behaviors, and attributes of American society.Most of the GSS data from 1972 is collected from face-to-face interviews. From 2002, these interviews came across a minor change. Personal interviews are changed into computer assisted. Whenever there is no possibility of doing in-person interview, survey is carried out through telephone.
+
+<strong>How this sampling method effects the generalizability and casuality?</strong>
+
+
+
+
+
+* * *
+
+## Part 2: Research question
+
+1990 is considered an important year in early history of internet. First web server was created and World Wide Web was founded. Considering this year as point of interest, Is there a relationship between level of education before 1990 and after 1990?
+
+
+* * *
+
+
+## Part 3: Exploratory data analysis
+
+
+For this test, columns needed for data set are  educ and year
+
+```{r subset-data}
+
+# selecting only necessary columns
+gss <- gss %>%  select("educ","year")
+
+# checking sample data
+head(gss)
+
+```
+
+Checking NA's in educ column:
+
+```{r checking-NAs}
+
+gss %>% select(educ) %>% is.na() %>% table()
+
+```
+
+Cheking NA's in year column:
+
+```{r}
+
+gss %>% select(year) %>% is.na() %>% table()
+
+```
+
+There are No NA's in "year". Handling NA's in educ column by filling them with median of the column
+
+```{r resolving-NAs}
+
+# filling NA's with median of the column and this is a categorical variable
+
+gss$educ[is.na(gss$educ)]  <- median(gss$educ, na.rm = TRUE)
+gss %>% select(educ) %>% is.na() %>% table()
+
+```
+
+NA's in the education column are resolved.
+
+```{r}
+
+# Total number of 'year' or unique items in 'year' columns
+
+length(unique(gss$year))
+```
+
+For the hypotheis that is framed above, we need 'year' variable to be rolled up into two levels. 'before-1990' & 'after 1990'
+
+
+```{r new-year-column}
+
+gss$year <- ifelse(gss$year <= 1990, "before-1990","after-1990")
+table(gss$year)
+
+```
+
+Exploring the education column data
+
+```{r education-column}
+
+# Frequencies of educ column
+
+gss %>% select("educ") %>% table() %>% sort() 
+
+# Maximun of educ column in gss data set
+
+print(max(gss$educ))
+
+```
+
+Here, there are 20 levels for education categorical variable. For making it more readable, I am categorzing these levels into categorizing education levels into no school, pre school, primary school, middle school , high school, UG, PG, PG+ higher education
+
+
+```{r modifying-education-column}
+
+gss$educ <- factor(gss$educ)
+levels(gss$educ) <- c("no-school","primary-school","primary-school","primary-school","primary-school","primary-school","primary-school","middle-school","middle-school","middle-school","middle-school","high-school","high-school","UG","UG","UG","UG","PG","PG","PG+","PG+")
+head(gss)
+
+```
+
+
+```{r visualizing-categorical-variables, fig.width=12,fig.height=8}
+
+
+bar_plot <- gss %>%
+        group_by(year, educ) %>%
+        summarise(freq = n())
+
+ggplot(bar_plot, aes(factor(educ), freq, fill = factor(year))) +
+        geom_bar(stat = "identity", position = "dodge") +
+        geom_text(aes(label = round(freq, 1)), position = position_dodge(0.9),
+                  vjust = 1.5, color = "black", size = 5)
+
+head(bar_plot)
+
+```
+The graph above does suggest that, except for high-school level educated individuals, there is a significant difference in education levels after 1990 and before 1990. After 1990, education levels for number of individuals is almost 40-50% lower than the size of eudcation levels before 1990. The scenario is reversed when we compare education levels below high school. This might not give
+
+
+```{r visualizing-categorical-variables-prop, fig.width=12,fig.height=8}
+
+
+normalized_bar_plot <- bar_plot %>% mutate(normalized = 100 * freq/sum(freq))
+
+
+ggplot(normalized_bar_plot, aes(factor(educ), normalized, fill = factor(year))) +
+        geom_bar(stat = "identity", position = "dodge") + 
+        geom_text(aes(label = round(normalized, digits = 3)), position = position_dodge(0.9),
+                      vjust = 1.5, color = "black", size = 5)
+  
+
+normalized_bar_plot
+
+```
+
+If we look at the same graph changing the input from total values to average values, we see that the pattern do not change much except for the proportions in high school (6% difference)
+
+* * *
+
+## Part 4: Inference
+
+
+### Framing Hypothesis 
+
+<strong> H0 (nothing changed)</strong> : Level of education did not change because of internet origin in 1990. The observed counts of level of education in years before 1990 and years after 1990 follow the same distribution.
+
+<strong> HA (something changed)</strong> :  Level of education did change because of internet origin in 1990. The observed counts of level of education in years before 1990 and years after 1990 do not follow the same distribution.
+
+### What type of hypothesis testing needs to be done?
+
+As we changed year into categorical varibale with two categories ( before-1990 & after-1990) and education into six categories, we can check if the distributions are similar using chi-square independence test. This test is perfect for our analysis because it is mainly used when working with categorical variables with at least one of them should have more than three levels. 
+
+Here, year is a categorical variables and education is a categorical varaible with more than two levels.Thus, we can use Chi-Square Independece Test
+
+
+### Checking Conditions 
+
+<strong>Evaluating conditions for the hypothesis test:</strong>
+
+1. Independence : Sampled observations must be independent
+- this is a random sample
+- Is sample size  less than 10% of American population? 
+
+```{r total-population-size}
+
+# Total number of observations in gss data
+
+str(gss)
+
+```
+
+There are 57061 observations in the dataset. This is definelty lower than the total number of population of US
+
+- checking if each case contributes to only one cell
+
+```{r table-gss}
+
+# Total number of categories present in the education level column
+
+table(gss)
+
+```
+
+Each observation will not fall into more than one category of education
+
+2. Sample size : Each level has atleast 5
+
+```{r frequecies-of-educ}
+
+head(gss)
+
+```
+
+The minimum value among all the levels is 151, it is more than the minimum. So, this condition is satisfied
+
+All the conditions are met. So, Chi Squared Independence Test can be used. Let's consider 0.05 to be significance level for this test.
+
+### Performing inference
+
+```{r chi-squared-test}
+
+chisq.test(table(gss))
+
+```
+
+### Interpreting results and Conclusion
+
+
+Here, the p-value is very low thant. As the p-value is less than the significance level of 0.05, we reject the null hypothesis. Conclusion can be made that the observed proportions(after 1990) are significantly different from the expected proportions(before 1990) and they do not follow same distribution.
+
+#### Reasoning for why CI is not also included?
+
+CI is an estimated interval for a population parameter.At a defined probability, what is the range of values that we can come up with for population parameter to fall within it. This is used for estimating numerical data. Here, all we have is categorical variables. So, it cannot be used here. 
+
+
+```{r #NOTES}
+
+# Fix visualizations
+# Arrange code in different blocks according to rubric
+
+```
+
