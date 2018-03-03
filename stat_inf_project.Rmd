@@ -1,10 +1,10 @@
 ---
 title: "Statistical inference with the GSS data"
 output:
+  pdf_document: default
   html_document:
     highlight: pygments
     theme: cerulean
-  pdf_document: default
 ---
 
 ## Setup
@@ -256,11 +256,4 @@ Here, the p-value is very low thant. As the p-value is less than the significanc
 
 CI is an estimated interval for a population parameter.At a defined probability, what is the range of values that we can come up with for population parameter to fall within it. This is used for estimating numerical data. Here, all we have is categorical variables. So, it cannot be used here. 
 
-
-```{r #NOTES}
-
-# Fix visualizations
-# Arrange code in different blocks according to rubric
-
-```
 
