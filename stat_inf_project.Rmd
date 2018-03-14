@@ -1,10 +1,10 @@
 ---
 title: "Statistical inference with the GSS data"
 output:
-  pdf_document: default
   html_document:
     highlight: pygments
     theme: cerulean
+  pdf_document: default
 ---
 
 ## Setup
@@ -42,16 +42,13 @@ GSS collects data to understand trends in attitudes, behaviors, and attributes o
 
 <strong>How this sampling method effects the generalizability and casuality?</strong>
 
-
-
-
+This is a observational study as data is being collected for certain period of time and stats are dervied from this. Hence, the results can establish a correlation but not make a casual statements. We can generalize the results at large as the sample selected here is obtained from Proportionate Stratified Random Sampling techniques from census data. 
 
 * * *
 
 ## Part 2: Research question
 
 1990 is considered an important year in early history of internet. First web server was created and World Wide Web was founded. Considering this year as point of interest, Is there a relationship between level of education before 1990 and after 1990?
-
 
 * * *
 
